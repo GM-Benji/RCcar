@@ -3,23 +3,19 @@ const byte pin2=PC2;
 const byte pin3=PD2;
 int16_t Rx;
 int16_t Ry;
-int16_t pRx = 0;
-int16_t pRy = 0;
+int16_t calibRx = 0;
+int16_t calibRy = 0;
 int16_t switch_bounceOC = 0;
 int16_t switch_bounce = 0;
 ISR(TIMER1_COMPA_vect)
 {
   OCR1A += 25000; // Advance The COMPA Register
-  Rx = analogRead(pin1) - 507;
-  Ry = analogRead(pin2) - 511;
-  if(Rx != pRx || Ry != pRy)
-  {
-    Serial.print(Rx);
-    Serial.print("  ");
-    Serial.println(Ry);
-    pRx = Rx;
-    pRy = Ry;
-  }
+  Rx = analogRead(pin1) - calibRx;
+  Ry = analogRead(pin2) - calibRy;
+  Serial.print(Rx);
+  Serial.print("  ");
+  Serial.println(Ry);
+  
   if(switch_bounce == 65635)
   {
     switch_bounce = 0;
@@ -41,6 +37,8 @@ void setup()
   TIMSK1 |= B00000010;  // Enable Timer COMPA Interrupt
   pinMode(pin3, INPUT_PULLUP);
   attachInterrupt(digitalPinToInterrupt(pin3), SW, FALLING);
+  calibRx = analogRead(pin1);
+  calibRy = analogRead(pin2);
 }
 
 void loop() {
