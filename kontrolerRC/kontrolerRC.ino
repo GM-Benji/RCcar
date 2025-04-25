@@ -1,21 +1,28 @@
+#include <VirtualWire.h>
 const byte pin1=PC1;
 const byte pin2=PC2;
 const byte pin3=PD2;
+const byte pin4=PD4;
 int16_t Rx;
 int16_t Ry;
 int16_t calibRx = 0;
 int16_t calibRy = 0;
 int16_t switch_bounceOC = 0;
 int16_t switch_bounce = 0;
-ISR(TIMER1_COMPA_vect)
+uint8_t xsign;
+uint8_t xyign;
+
+ISR(TIMER1_COMPB_vect)
 {
-  OCR1A += 25000; // Advance The COMPA Register
+  OCR1B += 25000; // Advance The COMPA Register
   Rx = analogRead(pin1) - calibRx;
   Ry = analogRead(pin2) - calibRy;
   Serial.print(Rx);
   Serial.print("  ");
   Serial.println(Ry);
-  
+  uint8_t data[3] = {69,21,37};
+  uint8_t *senddata = data;
+  vw_send(senddata,3);
   if(switch_bounce == 65635)
   {
     switch_bounce = 0;
@@ -26,19 +33,23 @@ ISR(TIMER1_COMPA_vect)
 
 void setup()
 {
+  vw_setup(4000);// speed of data transfer in bps, can max out at 10000
   Serial.begin(9600);
+  Serial.println("dupa");
   pinMode(pin1,INPUT);
   pinMode(pin2,INPUT);
-  TCCR1A = 0;           // Init Timer1
   TCCR1B = 0;           // Init Timer1
   TCCR1B |= B00000011;  // Prescalar = 64
-  OCR1A = 25000;        // Timer CompareA Register
-  OCR1A = 25000;        // Timer CompareB Register
-  TIMSK1 |= B00000010;  // Enable Timer COMPA Interrupt
+  OCR1B = 25000;        // Timer CompareB Register
+  TIMSK1 |= B00000100;  // Enable Timer COMPA Interrupt
   pinMode(pin3, INPUT_PULLUP);
   attachInterrupt(digitalPinToInterrupt(pin3), SW, FALLING);
   calibRx = analogRead(pin1);
   calibRy = analogRead(pin2);
+  vw_set_tx_pin(pin4); 
+  
+  
+  
 }
 
 void loop() {
