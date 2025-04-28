@@ -1,8 +1,8 @@
 #include <RCSwitch.h>
-const byte pin1=PC1;
-const byte pin2=PC2;
-const byte pin3=PD2;
-const byte pin4=PD4;
+const byte pin1=16;
+const byte pin2=18;
+const byte pin3=2;
+const byte pin4=10;
 uint16_t Rx;
 uint16_t Ry;
 int16_t calibRx = 0;
@@ -31,7 +31,7 @@ void setup()
   attachInterrupt(digitalPinToInterrupt(pin3), SW, FALLING);
   //calibRx = analogRead(pin1);
   //calibRy = analogRead(pin2);
-  
+  mySwitch.setRepeatTransmit(4);
 }
 ISR(TIMER2_COMPA_vect)
 {
@@ -40,12 +40,13 @@ ISR(TIMER2_COMPA_vect)
   Ry = analogRead(pin2);
   // Serial.print(Rx);
   // Serial.print("  ");
-   //Serial.println(Ry);
-  if(Rx<65)Rx=65;
-  mySwitch.send(Rx, 11);
+  // Serial.println(Ry);
+  if(Rx<1)Rx=1;
+  if(Ry<1)Ry=1;
+  mySwitch.send(Rx, 12);
   sdata = Ry | 10000000000;
-  Serial.println(Rx);
-  mySwitch.send(sdata, 11);
+  //Serial.println(Rx);
+  mySwitch.send(sdata, 12);
   if(switch_bounce == 65635)
   {
     switch_bounce = 0;
@@ -59,9 +60,13 @@ void loop() {
 }
 void SW()
 {
-  if(switch_bounceOC + 10 < switch_bounce)
+  if(switch_bounceOC < switch_bounce)
   {
     switch_bounceOC = switch_bounce;
-    Serial.println("change breaking");
+    sdata = Ry | 100000000000;
+    //mySwitch.setRepeatTransmit(4);
+    mySwitch.send(sdata, 12);
+    //mySwitch.setRepeatTransmit(10);
+    //Serial.println("change breaking");
   }
 }
